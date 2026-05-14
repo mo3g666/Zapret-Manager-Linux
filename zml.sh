@@ -17,6 +17,9 @@ source lib/os.sh
 source lib/service.sh
 source lib/meta.sh
 source lib/backup.sh
+source lib/zapret_config.sh
+source lib/strategies_builtin.sh
+source lib/installer.sh
 
 # === ГЛАВНОЕ МЕНЮ ===
 
@@ -71,9 +74,46 @@ show_main_menu() {
 
 # === МЕНЮ СТРАТЕГИЙ ===
 menu_strategies() {
-    print_header "Меню стратегий"
-    print_info "Будет реализовано на Этап 2"
-    pause_menu
+    while true; do
+        print_header "Меню стратегий"
+
+        local main=$(get_meta "MAIN_STRATEGY" "$DEFAULT_MAIN_STRATEGY")
+        local youtube=$(get_meta "YOUTUBE_STRATEGY" "")
+        local game=$(get_meta "GAME_STRATEGY" "")
+        local discord=$(get_meta "DISCORD_STRATEGY" "")
+
+        echo "Основная стратегия: $main"
+        echo "YouTube: ${youtube:-(не установлена)}"
+        echo "Игры: ${game:-(не установлена)}"
+        echo "Discord: ${discord:-(не установлена)}"
+        echo ""
+
+        echo "1) Выбрать и установить стратегию v1-v9"
+        echo "2) Выбрать и установить стратегию от Flowseal"
+        echo "3) Выбрать и установить стратегию для YouTube"
+        echo "4) Выбрать и установить стратегию для игр"
+        echo "5) Включить / Выключить обход по спискам РКН"
+        echo "6) Обновить список исключений"
+        echo "7) Включить / Выключить блок --wssize 1:6"
+        echo "8) Включить / Выключить блок --methodeol"
+        echo "0) Назад в главное меню"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1) select_builtin_strategy ;;
+            2) print_info "Flowseal будет на Этап 6" && pause_menu ;;
+            3) print_info "YouTube будет на Этап 6" && pause_menu ;;
+            4) print_info "Game будет на Этап 6" && pause_menu ;;
+            5) print_info "РКН будет на Этап 2" && pause_menu ;;
+            6) print_info "Обновление списков будет на Этап 2" && pause_menu ;;
+            7) print_info "WSSIZE будет на Этап 2" && pause_menu ;;
+            8) print_info "METHODEOL будет на Этап 2" && pause_menu ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === МЕНЮ ТЕСТИРОВАНИЯ ===
@@ -141,9 +181,41 @@ menu_diagnostics() {
 
 # === МЕНЮ INSTALLER ===
 menu_installer() {
-    print_header "Установка/обновление зависимостей"
-    print_info "Будет реализовано на Этап 2"
-    pause_menu
+    while true; do
+        print_header "Установка/обновление зависимостей"
+
+        echo "1) Проверить зависимости"
+        echo "2) Установить зависимости"
+        echo "3) Установить zapret (последняя версия)"
+        echo "4) Обновить zapret"
+        echo "0) Назад в главное меню"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1)
+                check_dependencies && print_success "Все зависимости установлены"
+                pause_menu
+                ;;
+            2)
+                install_dependencies && print_success "Зависимости установлены"
+                pause_menu
+                ;;
+            3)
+                local version
+                version=$(get_latest_zapret_version)
+                install_or_update_zapret "$version" && pause_menu
+                ;;
+            4)
+                local version
+                version=$(get_latest_zapret_version)
+                install_or_update_zapret "$version" && pause_menu
+                ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === ГЛАВНАЯ ФУНКЦИЯ ===
