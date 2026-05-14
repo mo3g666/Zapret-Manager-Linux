@@ -20,6 +20,13 @@ source lib/backup.sh
 source lib/hosts.sh
 source lib/zapret_config.sh
 source lib/strategies_builtin.sh
+source lib/strategies_discord.sh
+source lib/strategies_youtube.sh
+source lib/strategies_game.sh
+source lib/strategies_flowseal.sh
+source lib/discord.sh
+source lib/tester.sh
+source lib/offload_diag.sh
 source lib/installer.sh
 
 # === ГЛАВНОЕ МЕНЮ ===
@@ -90,7 +97,7 @@ menu_strategies() {
         echo ""
 
         echo "1) Выбрать и установить стратегию v1-v9"
-        echo "2) Выбрать и установить стратегию от Flowseal"
+        echo "2) Установить стратегию Flowseal"
         echo "3) Выбрать и установить стратегию для YouTube"
         echo "4) Выбрать и установить стратегию для игр"
         echo "5) Включить / Выключить обход по спискам РКН"
@@ -104,9 +111,23 @@ menu_strategies() {
 
         case "$choice" in
             1) select_builtin_strategy ;;
-            2) print_info "Flowseal будет на Этап 6" && pause_menu ;;
-            3) print_info "YouTube будет на Этап 6" && pause_menu ;;
-            4) print_info "Game будет на Этап 6" && pause_menu ;;
+            2) install_flowseal_strategy ;;
+            3)
+                print_header "YouTube стратегии"
+                echo "1) YV01 - Fake TLS"
+                echo "2) YV02 - Fake + multisplit (pos 1)"
+                echo "3) YV03 - Fake + multisplit (pos 2, sld)"
+                echo "0) Назад"
+                read -p "Выбор: " yt_choice
+                case "$yt_choice" in
+                    1) install_youtube_strategy "yv01" ;;
+                    2) install_youtube_strategy "yv02" ;;
+                    3) install_youtube_strategy "yv03" ;;
+                    0) ;;
+                    *) print_error "Неверный выбор" && pause_menu ;;
+                esac
+                ;;
+            4) install_game_strategy ;;
             5) print_info "РКН будет на Этап 2" && pause_menu ;;
             6) print_info "Обновление списков будет на Этап 2" && pause_menu ;;
             7) print_info "WSSIZE будет на Этап 2" && pause_menu ;;
@@ -119,16 +140,62 @@ menu_strategies() {
 
 # === МЕНЮ ТЕСТИРОВАНИЯ ===
 menu_testing() {
-    print_header "Меню тестирования стратегий"
-    print_info "Будет реализовано на Этап 5"
-    pause_menu
+    while true; do
+        print_header "Меню тестирования стратегий"
+
+        echo "1) Тестировать стратегии v1-v9"
+        echo "2) Тестировать текущую стратегию"
+        echo "3) Показать результаты последних тестов"
+        echo "0) Назад"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1) test_builtin_strategies ;;
+            2) test_current_strategy ;;
+            3) show_test_results ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === МЕНЮ DISCORD ===
 menu_discord() {
-    print_header "Меню настройки Discord"
-    print_info "Будет реализовано на Этап 4"
-    pause_menu
+    while true; do
+        print_header "Меню настройки Discord"
+
+        local discord_script=$(get_meta "DISCORD_SCRIPT" "(не установлен)")
+        echo "Установленный скрипт: $discord_script"
+        echo ""
+
+        echo "1) Установить скрипт 50-stun4all"
+        echo "2) Установить скрипт 50-quic4all"
+        echo "3) Установить скрипт 50-discord-media"
+        echo "4) Установить скрипт 50-discord"
+        echo "5) Удалить Discord скрипты"
+        echo "6) Добавить Finland IPs в hosts"
+        echo "7) Удалить Finland IPs"
+        echo "8) Установить Discord стратегию Dv1"
+        echo "0) Назад"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1) install_discord_script "50-stun4all" && set_meta "DISCORD_SCRIPT" "50-stun4all" && pause_menu ;;
+            2) install_discord_script "50-quic4all" && set_meta "DISCORD_SCRIPT" "50-quic4all" && pause_menu ;;
+            3) install_discord_script "50-discord-media" && set_meta "DISCORD_SCRIPT" "50-discord-media" && pause_menu ;;
+            4) install_discord_script "50-discord" && set_meta "DISCORD_SCRIPT" "50-discord" && pause_menu ;;
+            5) remove_discord_script && set_meta "DISCORD_SCRIPT" "" && pause_menu ;;
+            6) add_discord_finland_hosts && set_meta "DISCORD_FINLAND_IPS" "1" && pause_menu ;;
+            7) remove_discord_finland_hosts && set_meta "DISCORD_FINLAND_IPS" "0" && pause_menu ;;
+            8) install_discord_strategy ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === МЕНЮ HOSTS ===
@@ -246,9 +313,30 @@ menu_backup() {
 
 # === МЕНЮ ДИАГНОСТИКИ ===
 menu_diagnostics() {
-    print_header "Диагностика системы"
-    print_info "Будет реализовано на Этап 7"
-    pause_menu
+    while true; do
+        print_header "Диагностика системы"
+
+        echo "1) Проверить nftables flowtable"
+        echo "2) Проверить iptables FLOWOFFLOAD"
+        echo "3) Проверить NIC offloads"
+        echo "4) Отключить NIC offloads"
+        echo "0) Назад"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1) check_nft_flowtable ;;
+            2) check_iptables_flowoffload ;;
+            3) check_nic_offloads ;;
+            4)
+                read -p "Введите интерфейс: " iface
+                disable_nic_offloads "$iface"
+                ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === МЕНЮ INSTALLER ===
