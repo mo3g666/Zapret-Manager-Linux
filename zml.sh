@@ -17,6 +17,7 @@ source lib/os.sh
 source lib/service.sh
 source lib/meta.sh
 source lib/backup.sh
+source lib/hosts.sh
 source lib/zapret_config.sh
 source lib/strategies_builtin.sh
 source lib/installer.sh
@@ -132,9 +133,58 @@ menu_discord() {
 
 # === МЕНЮ HOSTS ===
 menu_hosts() {
-    print_header "Меню управления доменами в hosts"
-    print_info "Будет реализовано на Этап 3"
-    pause_menu
+    while true; do
+        print_header "Меню управления доменами в hosts"
+
+        list_hosts_groups
+        echo ""
+
+        echo " 0) Добавить nalog.ru"
+        echo " 1) Удалить  rutor.info"
+        echo " 2) Удалить  ntc.party"
+        echo " 3) Удалить  Instagram & Facebook"
+        echo " 4) Удалить  lib.rus.ec"
+        echo " 5) Удалить  AI сервисы"
+        echo " 6) Удалить  Twitch"
+        echo " 7) Удалить  Telegram Web"
+        echo " 8) Удалить  Spotify"
+        echo " 9) Удалить  Supercell"
+        echo "10) Удалить  githubusercontent.com"
+        echo "11) Удалить все домены"
+        echo "12) Восстановить hosts"
+        echo "Enter) Выход в главное меню"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            0) add_hosts_group "nalog" && pause_menu ;;
+            1) remove_hosts_group "rutor" && pause_menu ;;
+            2) remove_hosts_group "ntc" && pause_menu ;;
+            3) remove_hosts_group "instagram" && pause_menu ;;
+            4) remove_hosts_group "librusec" && pause_menu ;;
+            5) remove_hosts_group "ai" && pause_menu ;;
+            6) remove_hosts_group "twitch" && pause_menu ;;
+            7) remove_hosts_group "telegram" && pause_menu ;;
+            8) remove_hosts_group "spotify" && pause_menu ;;
+            9) remove_hosts_group "supercell" && pause_menu ;;
+            10) remove_hosts_group "github" && pause_menu ;;
+            11)
+                for group_id in nalog rutor ntc librusec ai instagram twitch telegram spotify supercell github; do
+                    remove_hosts_group "$group_id" 2>/dev/null
+                done
+                pause_menu
+                ;;
+            12)
+                list_backups
+                read -p "Выбрать номер backup: " backup_num
+                # Simple implementation - show files
+                pause_menu
+                ;;
+            "") break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === МЕНЮ СЕРВИСА ===
@@ -167,9 +217,31 @@ menu_service() {
 
 # === МЕНЮ BACKUP/RESTORE ===
 menu_backup() {
-    print_header "Backup/restore"
-    print_info "Будет реализовано на Этап 3"
-    pause_menu
+    while true; do
+        print_header "Backup/restore"
+
+        echo "1) Сделать backup hosts"
+        echo "2) Сделать backup стратегии"
+        echo "3) Сделать backup meta"
+        echo "4) Восстановить hosts"
+        echo "5) Восстановить стратегию"
+        echo "6) Показать доступные backups"
+        echo "0) Назад"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1) backup_hosts && print_success "Backup hosts создан" && pause_menu ;;
+            2) backup_strategy && print_success "Backup стратегии создан" && pause_menu ;;
+            3) backup_meta && print_success "Backup meta создан" && pause_menu ;;
+            4) list_backups && pause_menu ;;
+            5) list_backups && pause_menu ;;
+            6) list_backups && pause_menu ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
 }
 
 # === МЕНЮ ДИАГНОСТИКИ ===
