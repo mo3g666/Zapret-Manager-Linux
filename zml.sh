@@ -277,7 +277,7 @@ menu_service() {
             2) zml_stop_zapret && pause_menu ;;
             3) zml_restart_zapret && pause_menu ;;
             4)
-                systemctl status zapret 2>/dev/null || print_error "zapret не установлен"
+                systemctl status zapret2 2>/dev/null || print_error "zapret2 не установлен"
                 pause_menu
                 ;;
             5) break ;;
