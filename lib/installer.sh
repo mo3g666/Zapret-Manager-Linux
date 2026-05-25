@@ -161,18 +161,41 @@ install_or_update_zapret() {
     log_info "Директория /opt/zapret найдена"
 
     # Выставляем права на исполнение
-    if [ -f /opt/zapret/init.d/zapret ]; then
-        chmod +x /opt/zapret/init.d/zapret
-        log_info "Прав доступа выставлены на /opt/zapret/init.d/zapret"
+    if [ -f /opt/zapret/init.d/sysv/zapret ]; then
+        chmod +x /opt/zapret/init.d/sysv/zapret
+        log_info "Прав доступа выставлены на /opt/zapret/init.d/sysv/zapret"
     fi
 
-    # Проверяем основные файлы
-    if [ ! -f /opt/zapret/nfqws ]; then
-        log_warn "Внимание: /opt/zapret/nfqws не найден"
-    fi
+    # Устанавливаем systemd сервис
+    log_info "Установка systemd сервиса"
+    if [ -f /opt/zapret/init.d/systemd/zapret2.service ]; then
+        # Копируем systemd файл и переименовываем его
+        if ! cp /opt/zapret/init.d/systemd/zapret2.service /etc/systemd/system/zapret.service; then
+            log_error "Ошибка: не удалось скопировать systemd файл"
+            print_error "Не удалось установить systemd сервис"
+            log_info "=== Конец установки zapret (ОШИБКА) ==="
+            return 1
+        fi
 
-    log_info "Список файлов в /opt/zapret:"
-    ls -la /opt/zapret/ 2>&1 | while read -r line; do log_info "ls: $line"; done
+        # Исправляем пути в systemd файле
+        sed -i 's|/opt/zapret2|/opt/zapret|g' /etc/systemd/system/zapret.service
+
+        chmod 644 /etc/systemd/system/zapret.service
+
+        # Перезагружаем systemd
+        systemctl daemon-reload 2>/dev/null || {
+            log_error "Ошибка: не удалось перезагрузить systemd"
+        }
+
+        # Включаем сервис
+        systemctl enable zapret 2>/dev/null || {
+            log_warn "Не удалось включить сервис zapret в автозагрузку"
+        }
+
+        log_info "Systemd сервис установлен"
+    else
+        log_warn "Внимание: systemd файл не найден в /opt/zapret/init.d/systemd/"
+    fi
 
     print_success "zapret v$version успешно установлен в /opt/zapret/"
     log_info "zapret v$version успешно установлен в /opt/zapret/"
