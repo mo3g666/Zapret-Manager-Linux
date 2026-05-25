@@ -44,13 +44,13 @@ check_zapret_installed() {
 get_latest_zapret_version() {
     local version
 
-    log_info "Получаю последнюю версию zapret из GitHub API..."
+    log_info "Получаю последнюю версию zapret2 из GitHub API..."
 
-    version=$(curl -s "https://api.github.com/repos/remittor/zapret/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null | sed 's/^v//')
+    version=$(curl -s "https://api.github.com/repos/bol-van/zapret2/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null | sed 's/^v//')
 
     if [ -z "$version" ] || [ "$version" = "null" ]; then
-        log_warn "Не удалось получить версию из GitHub, используется по умолчанию: 0.20.12"
-        version="0.20.12"
+        log_warn "Не удалось получить версию из GitHub, используется по умолчанию: 0.9.5.2"
+        version="0.9.5.2"
     fi
 
     log_info "Определена версия zapret: $version"
@@ -74,8 +74,8 @@ install_or_update_zapret() {
     log_info "=== Начало установки zapret v$version ==="
     print_info "Проверяем zapret v$version на GitHub..."
 
-    # URL для скачивания из правильного репозитория remittor/zapret
-    local download_url="https://github.com/remittor/zapret/releases/download/v${version}/zapret-linux-amd64.tar.gz"
+    # URL для скачивания из правильного репозитория bol-van/zapret2
+    local download_url="https://github.com/bol-van/zapret2/releases/download/v${version}/zapret2-v${version}.tar.gz"
     log_info "URL скачивания: $download_url"
 
     # Проверяем, что /opt существует
@@ -88,7 +88,7 @@ install_or_update_zapret() {
     fi
 
     print_info "Скачиваем zapret v$version..."
-    local tmp_file="/tmp/zapret_$version.tar.gz"
+    local tmp_file="/tmp/zapret2_$version.tar.gz"
     log_info "Скачивание в: $tmp_file"
 
     if ! curl -fsSL -o "$tmp_file" "$download_url" 2>/dev/null; then
@@ -118,7 +118,7 @@ install_or_update_zapret() {
     print_info "Распаковываем zapret..."
     log_info "Распаковка в /opt"
 
-    if ! tar -xzf "$tmp_file" -C /opt/ 2>&1 | while read -r line; do log_info "tar: $line"; done; then
+    if ! tar -xzf "$tmp_file" -C /opt/ 2>&1; then
         log_error "Ошибка: не удалось распаковать zapret"
         print_error "Не удалось распаковать zapret"
         rm -f "$tmp_file"
