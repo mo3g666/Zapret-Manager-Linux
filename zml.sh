@@ -352,6 +352,7 @@ menu_installer() {
         echo "2) Установить зависимости"
         echo "3) Установить zapret (последняя версия)"
         echo "4) Обновить zapret"
+        echo "5) Показать логи установки"
         echo "0) Назад в главное меню"
         echo ""
 
@@ -375,6 +376,10 @@ menu_installer() {
                 local version
                 version=$(get_latest_zapret_version)
                 install_or_update_zapret "$version" && pause_menu
+                ;;
+            5)
+                show_install_log
+                pause_menu
                 ;;
             0) break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
