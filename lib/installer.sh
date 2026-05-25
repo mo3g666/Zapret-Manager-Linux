@@ -213,8 +213,8 @@ SYSTEMD_EOF
 
     log_info "Systemd сервис установлен"
 
-    print_success "zapret v$version успешно установлен в /opt/zapret/"
-    log_info "zapret v$version успешно установлен в /opt/zapret/"
+    print_success "zapret v$version успешно установлен в /opt/zapret2/"
+    log_info "zapret v$version успешно установлен в /opt/zapret2/"
     log_info "=== Конец установки zapret (УСПЕХ) ==="
     return 0
 }
