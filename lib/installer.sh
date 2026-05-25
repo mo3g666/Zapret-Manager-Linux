@@ -127,6 +127,19 @@ install_or_update_zapret() {
     rm -f "$tmp_file"
     log_info "Временный файл удалён"
 
+    # Переименовываем директорию zapret2-v* в zapret
+    local extracted_dir="/opt/zapret2-v${version}"
+    if [ -d "$extracted_dir" ]; then
+        log_info "Переименование директории $extracted_dir -> /opt/zapret"
+        rm -rf /opt/zapret 2>/dev/null
+        mv "$extracted_dir" /opt/zapret || {
+            log_error "Ошибка: не удалось переименовать директорию"
+            print_error "Не удалось переименовать директорию"
+            log_info "=== Конец установки zapret (ОШИБКА) ==="
+            return 1
+        }
+    fi
+
     # Проверяем успешность установки
     if [ ! -d /opt/zapret ]; then
         log_error "Ошибка: директория /opt/zapret не создана после распаковки"
