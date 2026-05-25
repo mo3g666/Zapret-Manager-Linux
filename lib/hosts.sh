@@ -11,7 +11,7 @@ add_hosts_group() {
     local group_id="$1"
     local group_ref="DOMAINS_${group_id^^}"
 
-    if [ -z "${!group_ref}" ]; then
+    if ! declare -p "$group_ref" &>/dev/null; then
         print_error "Группа $group_id не найдена"
         return 1
     fi
@@ -45,7 +45,7 @@ remove_hosts_group() {
     local group_id="$1"
     local group_ref="DOMAINS_${group_id^^}"
 
-    if [ -z "${!group_ref}" ]; then
+    if ! declare -p "$group_ref" &>/dev/null; then
         print_error "Группа $group_id не найдена"
         return 1
     fi
@@ -85,7 +85,7 @@ toggle_hosts_group() {
     local group_id="$1"
     local group_ref="DOMAINS_${group_id^^}"
 
-    if [ -z "${!group_ref}" ]; then
+    if ! declare -p "$group_ref" &>/dev/null; then
         print_error "Группа $group_id не найдена"
         return 1
     fi
