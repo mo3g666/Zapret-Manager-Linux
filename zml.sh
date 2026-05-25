@@ -33,6 +33,7 @@ source lib/tester.sh
 source lib/offload_diag.sh
 source lib/installer.sh
 source lib/updater.sh
+source lib/debug.sh
 
 # === ГЛАВНОЕ МЕНЮ ===
 
@@ -58,6 +59,7 @@ show_main_menu() {
         echo "6) Backup/restore"
         echo "7) Диагностика системы"
         echo "8) Установка/обновление зависимостей"
+        echo "9) 🔧 Диагностика стратегий (отладка)"
         echo "q) Выход"
         echo ""
 
@@ -72,6 +74,7 @@ show_main_menu() {
             6) menu_backup ;;
             7) menu_diagnostics ;;
             8) menu_installer ;;
+            9) menu_debug ;;
             q|Q)
                 print_info "До свидания"
                 log_info "Менеджер завершён"
@@ -382,6 +385,29 @@ menu_installer() {
                 show_install_log
                 pause_menu
                 ;;
+            0) break ;;
+            *) print_error "Неверный выбор" && pause_menu ;;
+        esac
+    done
+}
+
+# === МЕНЮ ДИАГНОСТИКИ ===
+menu_debug() {
+    while true; do
+        print_header "🔧 Диагностика стратегий"
+
+        echo "1) Показать все файлы стратегий"
+        echo "2) Тестировать функцию стратегии"
+        echo "3) Ручное применение стратегии"
+        echo "0) Назад"
+        echo ""
+
+        read -p "Выбор: " choice
+
+        case "$choice" in
+            1) debug_show_strategy_files ;;
+            2) debug_test_strategy_function ;;
+            3) debug_manual_apply_strategy ;;
             0) break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
