@@ -168,37 +168,50 @@ install_or_update_zapret() {
 
     # Устанавливаем systemd сервис
     log_info "Установка systemd сервиса"
-    if [ -f /opt/zapret/init.d/systemd/zapret2.service ]; then
-        # Копируем systemd файл и переименовываем его
-        if ! cp /opt/zapret/init.d/systemd/zapret2.service /etc/systemd/system/zapret.service; then
-            log_error "Ошибка: не удалось скопировать systemd файл"
-            print_error "Не удалось установить systemd сервис"
-            log_info "=== Конец установки zapret (ОШИБКА) ==="
-            return 1
-        fi
 
-        # Исправляем пути в systemd файле (zapret2 → zapret)
-        sed -i 's|/opt/zapret2|/opt/zapret|g; s|zapret2|zapret|g' /etc/systemd/system/zapret.service
+    # Создаём правильный systemd файл с правильными путями
+    cat > /etc/systemd/system/zapret.service << 'SYSTEMD_EOF'
+[Unit]
+Description=Zapret DPI Bypass Service
+After=network-online.target
+Wants=network-online.target
 
-        log_info "Содержимое systemd файла после замены:"
-        cat /etc/systemd/system/zapret.service | while read -r line; do log_info "systemd: $line"; done
+[Service]
+Type=forking
+Restart=no
+TimeoutSec=30sec
+IgnoreSIGPIPE=no
+GuessMainPID=no
+RemainAfterExit=no
+ExecStart=/opt/zapret/init.d/sysv/zapret start
+ExecStop=/opt/zapret/init.d/sysv/zapret stop
+ExecReload=/bin/kill -HUP $MAINPID
 
-        chmod 644 /etc/systemd/system/zapret.service
+[Install]
+WantedBy=multi-user.target
+SYSTEMD_EOF
 
-        # Перезагружаем systemd
-        if ! systemctl daemon-reload 2>/dev/null; then
-            log_error "Ошибка: не удалось перезагрузить systemd"
-        fi
-
-        # Включаем сервис
-        if ! systemctl enable zapret 2>/dev/null; then
-            log_warn "Не удалось включить сервис zapret в автозагрузку"
-        fi
-
-        log_info "Systemd сервис установлен"
-    else
-        log_warn "Внимание: systemd файл не найден в /opt/zapret/init.d/systemd/"
+    if [ ! -f /etc/systemd/system/zapret.service ]; then
+        log_error "Ошибка: не удалось создать systemd файл"
+        print_error "Не удалось установить systemd сервис"
+        log_info "=== Конец установки zapret (ОШИБКА) ==="
+        return 1
     fi
+
+    chmod 644 /etc/systemd/system/zapret.service
+    log_info "Systemd файл создан с правильными путями"
+
+    # Перезагружаем systemd
+    if ! systemctl daemon-reload 2>/dev/null; then
+        log_error "Ошибка: не удалось перезагрузить systemd"
+    fi
+
+    # Включаем сервис
+    if ! systemctl enable zapret 2>/dev/null; then
+        log_warn "Не удалось включить сервис zapret в автозагрузку"
+    fi
+
+    log_info "Systemd сервис установлен"
 
     print_success "zapret v$version успешно установлен в /opt/zapret/"
     log_info "zapret v$version успешно установлен в /opt/zapret/"
