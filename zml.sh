@@ -214,17 +214,17 @@ menu_hosts() {
         list_hosts_groups
         echo ""
 
-        echo " 0) Добавить nalog.ru"
-        echo " 1) Удалить  rutor.info"
-        echo " 2) Удалить  ntc.party"
-        echo " 3) Удалить  Instagram & Facebook"
-        echo " 4) Удалить  lib.rus.ec"
-        echo " 5) Удалить  AI сервисы"
-        echo " 6) Удалить  Twitch"
-        echo " 7) Удалить  Telegram Web"
-        echo " 8) Удалить  Spotify"
-        echo " 9) Удалить  Supercell"
-        echo "10) Удалить  githubusercontent.com"
+        echo " 0) Добавить/Удалить  nalog.ru"
+        echo " 1) Добавить/Удалить  rutor.info"
+        echo " 2) Добавить/Удалить  ntc.party"
+        echo " 3) Добавить/Удалить  Instagram & Facebook"
+        echo " 4) Добавить/Удалить  lib.rus.ec"
+        echo " 5) Добавить/Удалить  AI сервисы"
+        echo " 6) Добавить/Удалить  Twitch"
+        echo " 7) Добавить/Удалить  Telegram Web"
+        echo " 8) Добавить/Удалить  Spotify"
+        echo " 9) Добавить/Удалить  Supercell"
+        echo "10) Добавить/Удалить  githubusercontent.com"
         echo "11) Удалить все домены"
         echo "12) Восстановить hosts"
         echo "Enter) Выход в главное меню"
@@ -233,17 +233,17 @@ menu_hosts() {
         read -p "Выбор: " choice
 
         case "$choice" in
-            0) add_hosts_group "nalog" && pause_menu ;;
-            1) remove_hosts_group "rutor" && pause_menu ;;
-            2) remove_hosts_group "ntc" && pause_menu ;;
-            3) remove_hosts_group "instagram" && pause_menu ;;
-            4) remove_hosts_group "librusec" && pause_menu ;;
-            5) remove_hosts_group "ai" && pause_menu ;;
-            6) remove_hosts_group "twitch" && pause_menu ;;
-            7) remove_hosts_group "telegram" && pause_menu ;;
-            8) remove_hosts_group "spotify" && pause_menu ;;
-            9) remove_hosts_group "supercell" && pause_menu ;;
-            10) remove_hosts_group "github" && pause_menu ;;
+            0) toggle_hosts_group "nalog" && pause_menu ;;
+            1) toggle_hosts_group "rutor" && pause_menu ;;
+            2) toggle_hosts_group "ntc" && pause_menu ;;
+            3) toggle_hosts_group "instagram" && pause_menu ;;
+            4) toggle_hosts_group "librusec" && pause_menu ;;
+            5) toggle_hosts_group "ai" && pause_menu ;;
+            6) toggle_hosts_group "twitch" && pause_menu ;;
+            7) toggle_hosts_group "telegram" && pause_menu ;;
+            8) toggle_hosts_group "spotify" && pause_menu ;;
+            9) toggle_hosts_group "supercell" && pause_menu ;;
+            10) toggle_hosts_group "github" && pause_menu ;;
             11)
                 for group_id in nalog rutor ntc librusec ai instagram twitch telegram spotify supercell github; do
                     remove_hosts_group "$group_id" 2>/dev/null

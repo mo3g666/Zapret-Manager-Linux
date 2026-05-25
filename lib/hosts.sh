@@ -69,6 +69,25 @@ remove_hosts_group() {
     return 0
 }
 
+toggle_hosts_group() {
+    local group_id="$1"
+    local group_ref="DOMAINS_${group_id^^}"
+
+    if [ -z "${!group_ref}" ]; then
+        print_error "Группа $group_id не найдена"
+        return 1
+    fi
+
+    local -n group="$group_ref"
+    local marker_begin="${group[MARKER_BEGIN]}"
+
+    if grep -q "$marker_begin" "$HOSTS_FILE" 2>/dev/null; then
+        remove_hosts_group "$group_id"
+    else
+        add_hosts_group "$group_id"
+    fi
+}
+
 list_hosts_groups() {
     print_header "Добавленные группы в hosts"
 
