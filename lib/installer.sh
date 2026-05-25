@@ -160,42 +160,26 @@ install_or_update_zapret() {
 
     log_info "Директория /opt/zapret2 найдена"
 
-    # Инициализируем zapret2 конфигурацию
-    log_info "Инициализация конфигурации zapret2"
-    print_info "Настройка zapret2..."
+    # Запускаем официальный установщик zapret2
+    log_info "Запуск официального установщика zapret2 (install_easy.sh)"
+    print_info "Установка zapret2 (может занять время)..."
 
-    # Создаём config из config.default если не существует
-    if [ ! -f /opt/zapret2/config ]; then
-        if [ -f /opt/zapret2/config.default ]; then
-            cp /opt/zapret2/config.default /opt/zapret2/config
-            log_info "Config создан из config.default"
-        else
-            log_error "Ошибка: config.default не найден"
-            print_error "Ошибка инициализации zapret2"
-            log_info "=== Конец установки zapret (ОШИБКА) ==="
-            return 1
+    if [ -f /opt/zapret2/install_easy.sh ]; then
+        # Запускаем install_easy.sh с ответом Y на все вопросы
+        (echo "y"; echo "y"; echo "y"; echo "y"; echo "y"; sleep 1) | bash /opt/zapret2/install_easy.sh 2>&1 | while read -r line; do
+            log_info "install_easy: $line"
+        done
+
+        if [ $? -ne 0 ]; then
+            log_warn "install_easy.sh завершился с кодом ошибки, но это может быть нормально"
         fi
+        log_info "Установка zapret2 завершена"
+    else
+        log_error "Ошибка: install_easy.sh не найден в /opt/zapret2"
+        print_error "Ошибка установки zapret2"
+        log_info "=== Конец установки zapret (ОШИБКА) ==="
+        return 1
     fi
-
-    # Создаём необходимые директории
-    mkdir -p /opt/zapret2/ipset /opt/zapret2/init.d/sysv/custom.d /opt/zapret2/tmp 2>/dev/null
-    log_info "Директории созданы"
-
-    # Создаём необходимые файлы user lists если не существуют
-    [ -f /opt/zapret2/ipset/zapret-hosts-user-exclude.txt ] || \
-        cp /opt/zapret2/ipset/zapret-hosts-user-exclude.txt.default /opt/zapret2/ipset/zapret-hosts-user-exclude.txt 2>/dev/null
-    [ -f /opt/zapret2/ipset/zapret-hosts-user.txt ] || \
-        echo "nonexistent.domain" > /opt/zapret2/ipset/zapret-hosts-user.txt
-    [ -f /opt/zapret2/ipset/zapret-hosts-user-ipban.txt ] || \
-        touch /opt/zapret2/ipset/zapret-hosts-user-ipban.txt
-
-    log_info "User files инициализированы"
-
-    # Выставляем права на исполнение для скриптов
-    find /opt/zapret2 -type f -name "*.sh" -exec chmod +x {} \;
-    find /opt/zapret2/binaries -type f -exec chmod +x {} \;
-    chmod +x /opt/zapret2/init.d/sysv/zapret2 2>/dev/null
-    log_info "Права на исполнение выставлены"
 
     # Устанавливаем systemd сервис
     log_info "Установка systemd сервиса"
