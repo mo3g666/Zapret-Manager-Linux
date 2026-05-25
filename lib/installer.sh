@@ -44,9 +44,15 @@ check_zapret_installed() {
 get_latest_zapret_version() {
     local version
 
-    version=$(curl -s "https://api.github.com/repos/bol-van/zapret2/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null | sed 's/^v//')
+    version=$(curl -s \
+        --connect-timeout 5 \
+        --max-time 15 \
+        "https://api.github.com/repos/bol-van/zapret2/releases/latest" 2>/dev/null | \
+        jq -r '.tag_name' 2>/dev/null | \
+        sed 's/^v//')
 
     if [ -z "$version" ] || [ "$version" = "null" ]; then
+        log_warn "Не удалось получить версию с GitHub, используем fallback"
         version="0.9.5.2"
     fi
 
@@ -89,7 +95,29 @@ install_or_update_zapret() {
     local tmp_file="/tmp/zapret2_$version.tar.gz"
     log_info "Скачивание в: $tmp_file"
 
-    if ! curl -fsSL -o "$tmp_file" "$download_url" 2>/dev/null; then
+    # Скачиваем с таймаутами и повторными попытками
+    local retries=3
+    local success=false
+
+    for ((attempt=1; attempt<=retries; attempt++)); do
+        log_info "Попытка скачивания $attempt/$retries..."
+
+        if curl -fsSL \
+            --connect-timeout 10 \
+            --max-time 120 \
+            -L \
+            -o "$tmp_file" \
+            "$download_url" 2>/dev/null; then
+            success=true
+            break
+        else
+            log_warn "Попытка $attempt не удалась, повтор..."
+            rm -f "$tmp_file"
+            sleep 3
+        fi
+    done
+
+    if [ "$success" != "true" ]; then
         log_error "Ошибка: не удалось скачать zapret v$version с URL: $download_url"
         log_error "Проверьте: интернет-соединение, номер версии, доступность GitHub"
         print_error "Не удалось скачать zapret v$version"
