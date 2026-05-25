@@ -7,3 +7,6 @@ examples/
 .idea/
 .vscode/
 *.log
+CLAUDE.md
+GEMINI.md
+AGENTS.md
