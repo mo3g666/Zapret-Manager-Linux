@@ -5,17 +5,17 @@ source "$(dirname "$0")/../config/paths.sh"
 
 log_info() {
     local message="$1"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $message" | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $message" >> "$LOG_FILE"
 }
 
 log_warn() {
     local message="$1"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] $message" | tee -a "$LOG_FILE" >&2
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [WARN] $message" >> "$LOG_FILE"
 }
 
 log_error() {
     local message="$1"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $message" | tee -a "$LOG_FILE" >&2
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $message" >> "$LOG_FILE"
     return 1
 }
 
