@@ -17,6 +17,8 @@ BIN_PATH="/usr/local/bin"
 ETC_DIR="/etc/zapret-manager"
 VAR_DIR="/var/lib/zapret-manager"
 REPO_URL="${REPO_URL:-https://raw.githubusercontent.com/mo3g666/Zapret-Manager-Linux/main}"
+GITHUB_REPO="mo3g666/Zapret-Manager-Linux"
+GITHUB_BRANCH="main"
 
 # Функции логирования
 log_info() {
@@ -61,7 +63,7 @@ check_os() {
 # Проверка зависимостей
 check_dependencies() {
     local missing=()
-    for cmd in bash curl sed grep jq systemctl; do
+    for cmd in bash curl sed grep jq systemctl unzip file; do
         if ! command -v "$cmd" &> /dev/null; then
             missing+=("$cmd")
         fi
@@ -76,84 +78,81 @@ check_dependencies() {
     log_success "Все зависимости установлены"
 }
 
-# Загрузка файлов из репозитория GitHub
-download_file_with_retry() {
-    local url="$1"
-    local output="$2"
-    local filename="$3"
-    local retries=3
-    local timeout=30
-
-    for ((attempt=1; attempt<=retries; attempt++)); do
-        log_info "Загружаю $filename (попытка $attempt/$retries)..."
-
-        if curl -fsSL --connect-timeout 5 --max-time $timeout "$url" -o "$output" 2>/dev/null; then
-            if [ -s "$output" ]; then
-                log_info "✓ Загружен $filename"
-                return 0
-            else
-                log_warning "Файл $filename пустой, повтор..."
-            fi
-        else
-            log_warning "Ошибка загрузки $filename, повтор..."
-        fi
-
-        if [ $attempt -lt $retries ]; then
-            sleep 2
-        fi
-    done
-
-    log_error "Не удалось загрузить $filename после $retries попыток"
-    return 1
-}
-
+# Загрузка архива из GitHub
 download_files() {
     local temp_dir
     temp_dir=$(mktemp -d)
     trap "rm -rf $temp_dir" EXIT
 
-    log_info "Загрузка файлов из репозитория..."
+    local archive_url="https://github.com/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.zip"
+    local archive_file="$temp_dir/repo.zip"
 
-    # Создание структуры временной директории
-    mkdir -p "$temp_dir/config"
-    mkdir -p "$temp_dir/lib"
+    log_info "Загрузка проекта из GitHub..."
+    log_info "URL: $archive_url"
 
-    # Загрузка основного скрипта
-    if ! download_file_with_retry "${REPO_URL}/zml.sh" "$temp_dir/zml.sh" "zml.sh"; then
+    # Скачиваем архив с таймаутами и повторами
+    local retries=3
+    for ((attempt=1; attempt<=retries; attempt++)); do
+        log_info "Попытка $attempt/$retries..."
+
+        if curl -fsSL \
+            --connect-timeout 10 \
+            --max-time 120 \
+            -L \
+            -o "$archive_file" \
+            "$archive_url" 2>/dev/null; then
+
+            if [ -s "$archive_file" ] && file "$archive_file" | grep -q "Zip archive"; then
+                log_success "Архив загружен успешно"
+                break
+            else
+                log_warning "Архив повреждён или пустой, повтор..."
+                rm -f "$archive_file"
+            fi
+        else
+            log_warning "Ошибка загрузки, повтор..."
+        fi
+
+        if [ $attempt -lt $retries ]; then
+            sleep 3
+        fi
+    done
+
+    if [ ! -f "$archive_file" ] || ! file "$archive_file" | grep -q "Zip archive"; then
+        log_error "Не удалось загрузить архив проекта"
+        log_error "Проверьте интернет-соединение и доступность GitHub"
         return 1
     fi
-    chmod +x "$temp_dir/zml.sh"
 
-    # Загрузка конфиг-файлов
-    for file in defaults.sh domains.sh paths.sh; do
-        if ! download_file_with_retry "${REPO_URL}/config/${file}" "$temp_dir/config/${file}" "config/${file}"; then
-            return 1
-        fi
-    done
+    # Распаковываем архив
+    log_info "Распаковка архива..."
+    if ! unzip -q "$archive_file" -d "$temp_dir" 2>/dev/null; then
+        log_error "Не удалось распаковать архив"
+        return 1
+    fi
 
-    # Загрузка файлов lib
-    local lib_files=(
-        "backup.sh" "discord.sh" "hosts.sh" "installer.sh"
-        "logger.sh" "meta.sh" "offload_diag.sh" "os.sh"
-        "service.sh" "strategies_builtin.sh" "strategies_discord.sh"
-        "strategies_flowseal.sh" "strategies_game.sh" "strategies_youtube.sh"
-        "tester.sh" "ui.sh" "updater.sh" "zapret_config.sh"
-    )
+    # Находим распакованную директорию (будет Zapret-Manager-Linux-main)
+    local extracted_dir
+    extracted_dir=$(find "$temp_dir" -maxdepth 1 -type d -name "*Zapret-Manager-Linux*" 2>/dev/null | head -1)
 
-    for file in "${lib_files[@]}"; do
-        if ! download_file_with_retry "${REPO_URL}/lib/${file}" "$temp_dir/lib/${file}" "lib/${file}"; then
-            return 1
-        fi
-    done
+    if [ -z "$extracted_dir" ] || [ ! -d "$extracted_dir" ]; then
+        log_error "Распакованная директория проекта не найдена"
+        return 1
+    fi
 
-    log_success "Файлы загружены успешно"
+    log_success "Проект распакован в $extracted_dir"
 
-    # Копирование в директорию установки
+    # Копируем файлы в директорию установки
+    log_info "Установка файлов в ${INSTALL_PREFIX}..."
     mkdir -p "$INSTALL_PREFIX"
-    cp -r "$temp_dir"/* "$INSTALL_PREFIX/"
+    cp -r "$extracted_dir/zml.sh" "$INSTALL_PREFIX/" || return 1
+    cp -r "$extracted_dir/config" "$INSTALL_PREFIX/" || return 1
+    cp -r "$extracted_dir/lib" "$INSTALL_PREFIX/" || return 1
+
+    # Устанавливаем права
     chmod 755 "$INSTALL_PREFIX/zml.sh"
-    chmod 755 "$INSTALL_PREFIX/config"/*.sh
-    chmod 755 "$INSTALL_PREFIX/lib"/*.sh
+    chmod 755 "$INSTALL_PREFIX/config"/*.sh 2>/dev/null || true
+    chmod 755 "$INSTALL_PREFIX/lib"/*.sh 2>/dev/null || true
 
     log_success "Файлы установлены в ${INSTALL_PREFIX}"
 }
