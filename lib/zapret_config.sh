@@ -22,8 +22,17 @@ zml_apply_strategy() {
 
     ensure_zapret_dirs || return 1
 
+    # Копируем стратегию в оба места для совместимости
+    # 1. В config (где ищет zapret2 по умолчанию)
+    if ! cp "$STRATEGY_FILE" "$ZAPRET_CONFIG_DIR/config"; then
+        log_error "Не удалось скопировать стратегию в $ZAPRET_CONFIG_DIR/config"
+        return 1
+    fi
+    log_info "Стратегия скопирована в $ZAPRET_CONFIG_DIR/config"
+
+    # 2. В current.strategy (для совместимости с нашей системой)
     if ! cp "$STRATEGY_FILE" "$ZAPRET_CONFIG_DIR/current.strategy"; then
-        log_error "Не удалось скопировать стратегию в zapret"
+        log_error "Не удалось скопировать стратегию в $ZAPRET_CONFIG_DIR/current.strategy"
         return 1
     fi
 
