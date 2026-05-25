@@ -22,23 +22,57 @@ zml_apply_strategy() {
         return 1
     fi
 
+    if [ ! -s "$STRATEGY_FILE" ]; then
+        log_error "Файл стратегии пустой"
+        return 1
+    fi
+
     ensure_zapret_dirs || return 1
 
-    # ВАЖНО: /opt/zapret2/config это ФАЙЛ (конфиг zapret2), а не директория!
-    # Копируем стратегию напрямую в файл /opt/zapret2/config
     local zapret_config_file="/opt/zapret2/config"
 
-    if ! cp "$STRATEGY_FILE" "$zapret_config_file"; then
-        log_error "Не удалось скопировать стратегию в $zapret_config_file"
+    if [ ! -f "$zapret_config_file" ]; then
+        log_error "Конфиг zapret2 не найден: $zapret_config_file"
+        log_error "Установите zapret2 сначала (меню 8)"
         return 1
     fi
-    log_info "Стратегия скопирована в $zapret_config_file"
 
-    # Проверяем что файл не пустой
-    if [ ! -s "$zapret_config_file" ]; then
-        log_error "Ошибка: конфиг файл пустой"
+    # Бэкап конфига перед изменением
+    cp "$zapret_config_file" "${zapret_config_file}.bak" 2>/dev/null || true
+
+    # Включаем nfqws2
+    if grep -q "^NFQWS2_ENABLE=" "$zapret_config_file"; then
+        sed -i 's/^NFQWS2_ENABLE=[^ ]*/NFQWS2_ENABLE=1/' "$zapret_config_file"
+    else
+        echo "NFQWS2_ENABLE=1" >> "$zapret_config_file"
+    fi
+
+    # Обновляем NFQWS2_OPT, не трогая остальные настройки (FWTYPE, IFACE_WAN и др.)
+    # Пропускаем строки-маркеры (#v7, #YOUTUBE и т.д.) и пустые строки
+    local tmp_config
+    tmp_config=$(mktemp) || return 1
+
+    awk -v strat="$STRATEGY_FILE" '
+        /^NFQWS2_OPT=/ {
+            print "NFQWS2_OPT=\""
+            while ((getline line < strat) > 0) {
+                if (line !~ /^#/ && line != "") print line
+            }
+            close(strat)
+            print "\""
+            in_opt = 1
+            next
+        }
+        in_opt { if (/^"$/) in_opt = 0; next }
+        { print }
+    ' "$zapret_config_file" > "$tmp_config" || { rm -f "$tmp_config"; return 1; }
+
+    if ! mv "$tmp_config" "$zapret_config_file"; then
+        log_error "Не удалось обновить $zapret_config_file"
         return 1
     fi
+
+    log_info "NFQWS2_OPT обновлён в $zapret_config_file"
 
     if ! zml_restart_zapret; then
         log_error "Не удалось применить стратегию"

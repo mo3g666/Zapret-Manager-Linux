@@ -6,168 +6,64 @@ source "$(dirname "$0")/logger.sh"
 source "$(dirname "$0")/meta.sh"
 source "$(dirname "$0")/zapret_config.sh"
 
-# v1: Split2 with seqovl
+# Стратегии используют новый синтаксис nfqws2 (zapret2) с --lua-desync=
+# Каждое правило — на одной строке, разделены через --new
+# Именованные блобы (fake_default_tls, fake_default_quic) берутся из Lua-библиотеки zapret2
+
+# v1: Multisplit без fake (простой)
 strategy_v1() {
-    echo "--filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=split2
---dpi-desync-split-seqovl=681
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/stun.bin"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=4"
 }
 
-# v2: Fake + disorder
+# v2: Fake + multidisorder (аналог config.default)
 strategy_v2() {
-    echo "--filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake,fakeddisorder
---dpi-desync-split-pos=10,midsld
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fake-tls-mod=rnd,dupsid,sni=fonts.google.com
---dpi-desync-fooling=badseq,badsum
---dpi-desync-badseq-increment=0
---new
---filter-udp=443
---dpi-desync=fake
---dpi-desync-repeats=4
---dpi-desync-fake-quic=$ZAPRET_FAKE_DIR/quic_initial_www_google_com.bin"
+    echo "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new
+--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000 --lua-desync=multidisorder:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6"
 }
 
-# v3: Similar to v2 with different fake
+# v3: Fake + multidisorder с tls_mod
 strategy_v3() {
-    echo "--filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake,fakeddisorder
---dpi-desync-split-pos=10,midsld
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/t2.bin
---dpi-desync-fake-tls-mod=rnd,dupsid,sni=m.ok.ru
---dpi-desync-fooling=badseq,badsum
---dpi-desync-badseq-increment=0
---new
---filter-udp=443
---dpi-desync=fake
---dpi-desync-repeats=4
---dpi-desync-fake-quic=$ZAPRET_FAKE_DIR/quic_initial_www_google_com.bin"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tls_mod=rnd,dupsid --lua-desync=multidisorder:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=4"
 }
 
-# v4: Google hostlist
+# v4: Fake + multisplit (базовый)
 strategy_v4() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=fake,multisplit
---dpi-desync-split-pos=2,sld
---dpi-desync-fake-tls=0x0F0F0F0F
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fake-tls-mod=rnd,dupsid,sni=google.com
---dpi-desync-split-seqovl=2108
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fooling=badseq
---new
---filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=multisplit
---dpi-desync-split-seqovl=582
---dpi-desync-split-pos=1
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/stun.bin
---new
---filter-udp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake
---dpi-desync-repeats=4
---dpi-desync-fake-quic=$ZAPRET_FAKE_DIR/quic_initial_www_google_com.bin"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5 --lua-desync=multisplit:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=4"
 }
 
-# v5: Fake + disorder with STUN
+# v5: Fake + multisplit с tls_mod
 strategy_v5() {
-    echo "--filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake,fakeddisorder
---dpi-desync-split-pos=1
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/stun.bin
---dpi-desync-fake-tls-mod=none
---dpi-desync-fakedsplit-pattern=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fooling=badseq,badsum
---dpi-desync-badseq-increment=0
---new
---filter-udp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake
---dpi-desync-repeats=6
---dpi-desync-fake-quic=$ZAPRET_FAKE_DIR/quic_initial_www_google_com.bin"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tls_mod=rnd,dupsid --lua-desync=multisplit:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6"
 }
 
-# v6: Multisplit with sniext
+# v6: wssize (для DPI чувствительного к размеру окна)
 strategy_v6() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=multisplit
---dpi-desync-split-pos=1,sniext+1
---dpi-desync-split-seqovl=1
---new
---filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=hostfakesplit
---dpi-desync-hostfakesplit-mod=host=i2.photo.2gis.com
---dpi-desync-hostfakesplit-midhost=host-2
---dpi-desync-split-seqovl=726
---dpi-desync-fooling=badsum,badseq
---dpi-desync-badseq-increment=0"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=wssize:wsize=1:scale=6 --lua-desync=fake:blob=fake_default_tls:tcp_md5 --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=4"
 }
 
-# v7: Default - fake + multisplit with Google hostlist (РЕКОМЕНДУЕТСЯ)
+# v7: Fake + multisplit с tls_mod — РЕКОМЕНДУЕТСЯ
 strategy_v7() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=fake,multisplit
---dpi-desync-split-pos=2,sld
---dpi-desync-fake-tls=0x0F0F0F0F
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fake-tls-mod=rnd,dupsid,sni=ggpht.com
---dpi-desync-repeats=6
---dpi-desync-split-seqovl=620
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fooling=badsum,badseq
---new
---filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake,multisplit
---dpi-desync-split-seqovl=654
---dpi-desync-split-pos=1
---dpi-desync-fooling=badseq,badsum
---dpi-desync-repeats=6
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/stun.bin
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/stun.bin
---dpi-desync-badseq-increment=0"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tls_mod=rnd,dupsid --lua-desync=multisplit:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6"
 }
 
-# v8: Similar to v7 with different fooling
+# v8: Полное покрытие HTTP+HTTPS+QUIC
 strategy_v8() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=fake,multisplit
---dpi-desync-split-pos=2,sld
---dpi-desync-fake-tls=0x0F0F0F0F
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fake-tls-mod=rnd,dupsid,sni=ggpht.com
---dpi-desync-split-seqovl=620
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-fooling=badsum,badseq
---new
---filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=fake
---dpi-desync-fooling=ts
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/4pda.bin
---dpi-desync-fake-tls-mod=none"
+    echo "--filter-tcp=80 --filter-l7=http --payload=http_req --lua-desync=fake:blob=fake_default_http:tcp_md5 --lua-desync=multisplit:pos=method+2 --new
+--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:tls_mod=rnd,dupsid --lua-desync=multisplit:pos=1,midsld --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=6"
 }
 
-# v9: Hostfakesplit
+# v9: seqovl
 strategy_v9() {
-    echo "--filter-tcp=443
---hostlist-exclude=$ZAPRET_IPSET_DIR/zapret-hosts-user-exclude.txt
---dpi-desync=hostfakesplit
---dpi-desync-fooling=badseq,badsum
---dpi-desync-hostfakesplit-mod=host=mapgl.2gis.com
---dpi-desync-badseq-increment=0"
+    echo "--filter-tcp=443 --filter-l7=tls --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5 --lua-desync=multisplit:pos=1:seqovl=1 --new
+--filter-udp=443 --filter-l7=quic --payload=quic_initial --lua-desync=fake:blob=fake_default_quic:repeats=4"
 }
 
 # === ВЫБОР И УСТАНОВКА ===
