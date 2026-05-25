@@ -77,6 +77,36 @@ check_dependencies() {
 }
 
 # Загрузка файлов из репозитория GitHub
+download_file_with_retry() {
+    local url="$1"
+    local output="$2"
+    local filename="$3"
+    local retries=3
+    local timeout=30
+
+    for ((attempt=1; attempt<=retries; attempt++)); do
+        log_info "Загружаю $filename (попытка $attempt/$retries)..."
+
+        if curl -fsSL --connect-timeout 5 --max-time $timeout "$url" -o "$output" 2>/dev/null; then
+            if [ -s "$output" ]; then
+                log_info "✓ Загружен $filename"
+                return 0
+            else
+                log_warning "Файл $filename пустой, повтор..."
+            fi
+        else
+            log_warning "Ошибка загрузки $filename, повтор..."
+        fi
+
+        if [ $attempt -lt $retries ]; then
+            sleep 2
+        fi
+    done
+
+    log_error "Не удалось загрузить $filename после $retries попыток"
+    return 1
+}
+
 download_files() {
     local temp_dir
     temp_dir=$(mktemp -d)
@@ -89,16 +119,14 @@ download_files() {
     mkdir -p "$temp_dir/lib"
 
     # Загрузка основного скрипта
-    if ! curl -fsSL "${REPO_URL}/zml.sh" -o "$temp_dir/zml.sh"; then
-        log_error "Ошибка загрузки zml.sh"
+    if ! download_file_with_retry "${REPO_URL}/zml.sh" "$temp_dir/zml.sh" "zml.sh"; then
         return 1
     fi
     chmod +x "$temp_dir/zml.sh"
 
     # Загрузка конфиг-файлов
     for file in defaults.sh domains.sh paths.sh; do
-        if ! curl -fsSL "${REPO_URL}/config/${file}" -o "$temp_dir/config/${file}"; then
-            log_error "Ошибка загрузки config/${file}"
+        if ! download_file_with_retry "${REPO_URL}/config/${file}" "$temp_dir/config/${file}" "config/${file}"; then
             return 1
         fi
     done
@@ -113,8 +141,7 @@ download_files() {
     )
 
     for file in "${lib_files[@]}"; do
-        if ! curl -fsSL "${REPO_URL}/lib/${file}" -o "$temp_dir/lib/${file}"; then
-            log_error "Ошибка загрузки lib/${file}"
+        if ! download_file_with_retry "${REPO_URL}/lib/${file}" "$temp_dir/lib/${file}" "lib/${file}"; then
             return 1
         fi
     done
