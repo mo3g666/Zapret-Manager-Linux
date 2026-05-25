@@ -60,7 +60,7 @@ show_main_menu() {
         echo "7) Диагностика системы"
         echo "8) Установка/обновление зависимостей"
         echo "9) 🔧 Диагностика стратегий (отладка)"
-        echo "q) Выход"
+        echo "q/Enter) Выход"
         echo ""
 
         read -p "Выбор: " choice
@@ -75,7 +75,7 @@ show_main_menu() {
             7) menu_diagnostics ;;
             8) menu_installer ;;
             9) menu_debug ;;
-            q|Q)
+            q|Q|"")
                 print_info "До свидания"
                 log_info "Менеджер завершён"
                 break
@@ -131,7 +131,7 @@ menu_strategies() {
                     1) install_youtube_strategy "yv01" ;;
                     2) install_youtube_strategy "yv02" ;;
                     3) install_youtube_strategy "yv03" ;;
-                    0) ;;
+                    0|"") ;;
                     *) print_error "Неверный выбор" && pause_menu ;;
                 esac
                 ;;
@@ -140,7 +140,7 @@ menu_strategies() {
             6) print_info "Обновление списков будет на Этап 2" && pause_menu ;;
             7) print_info "WSSIZE будет на Этап 2" && pause_menu ;;
             8) print_info "METHODEOL будет на Этап 2" && pause_menu ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -163,7 +163,7 @@ menu_testing() {
             1) test_builtin_strategies ;;
             2) test_current_strategy ;;
             3) show_test_results ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -200,7 +200,7 @@ menu_discord() {
             6) add_discord_finland_hosts && set_meta "DISCORD_FINLAND_IPS" "1" && pause_menu ;;
             7) remove_discord_finland_hosts && set_meta "DISCORD_FINLAND_IPS" "0" && pause_menu ;;
             8) install_discord_strategy ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -284,7 +284,7 @@ menu_service() {
                 systemctl status zapret2 2>/dev/null || print_error "zapret2 не установлен"
                 pause_menu
                 ;;
-            5) break ;;
+            5|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -313,7 +313,7 @@ menu_backup() {
             4) list_backups && pause_menu ;;
             5) list_backups && pause_menu ;;
             6) list_backups && pause_menu ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -341,7 +341,7 @@ menu_diagnostics() {
                 read -p "Введите интерфейс: " iface
                 disable_nic_offloads "$iface"
                 ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -385,7 +385,7 @@ menu_installer() {
                 show_install_log
                 pause_menu
                 ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
@@ -408,7 +408,7 @@ menu_debug() {
             1) debug_show_strategy_files ;;
             2) debug_test_strategy_function ;;
             3) debug_manual_apply_strategy ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done

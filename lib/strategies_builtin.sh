@@ -100,7 +100,7 @@ select_builtin_strategy() {
             7) install_builtin_strategy "v7" && break ;;
             8) install_builtin_strategy "v8" && break ;;
             9) install_builtin_strategy "v9" && break ;;
-            0) break ;;
+            0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac
     done
