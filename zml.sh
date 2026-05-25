@@ -32,6 +32,7 @@ source lib/discord.sh
 source lib/tester.sh
 source lib/offload_diag.sh
 source lib/installer.sh
+source lib/updater.sh
 
 # === ГЛАВНОЕ МЕНЮ ===
 
@@ -400,6 +401,12 @@ main() {
     ensure_meta_defaults || exit 1
 
     log_info "Запуск Zapret Manager Linux v$ZAPRET_MANAGER_VERSION"
+
+    # Проверка обновлений (асинхронно в фоне)
+    check_for_updates
+
+    # Уведомление об обновлении (если доступно)
+    notify_if_update_available
 
     # Главное меню
     show_main_menu

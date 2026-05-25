@@ -109,7 +109,7 @@ download_files() {
         "logger.sh" "meta.sh" "offload_diag.sh" "os.sh"
         "service.sh" "strategies_builtin.sh" "strategies_discord.sh"
         "strategies_flowseal.sh" "strategies_game.sh" "strategies_youtube.sh"
-        "tester.sh" "ui.sh" "zapret_config.sh"
+        "tester.sh" "ui.sh" "updater.sh" "zapret_config.sh"
     )
 
     for file in "${lib_files[@]}"; do
