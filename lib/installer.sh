@@ -4,8 +4,11 @@
 source "$(dirname "$0")/../config/paths.sh"
 source "$(dirname "$0")/logger.sh"
 source "$(dirname "$0")/ui.sh"
+source "$(dirname "$0")/os.sh"
 
 install_dependencies() {
+    check_root || return 1
+
     local deps=(
         "bash" "curl" "wget" "ca-certificates" "grep" "sed" "gawk"
         "coreutils" "iproute2" "dnsutils" "unzip" "jq"
@@ -31,28 +34,50 @@ check_zapret_installed() {
     systemctl list-unit-files 2>/dev/null | grep -q "^zapret"
 }
 
+get_latest_zapret_version() {
+    local version
+    version=$(curl -s "https://api.github.com/repos/remittor/zapret/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null | sed 's/^v//')
+
+    if [ -z "$version" ] || [ "$version" = "null" ]; then
+        version="0.20.12"
+    fi
+
+    echo "$version"
+}
+
 install_or_update_zapret() {
     local version="$1"
+
+    check_root || return 1
 
     if [ -z "$version" ]; then
         print_error "Версия zapret не указана"
         return 1
     fi
 
-    print_info "Проверяем zapret на GitHub..."
+    print_info "Проверяем zapret v$version на GitHub..."
 
-    local download_url="https://github.com/remittor/zapret-openwrt/releases/download/v${version}/zapret_v${version}_linux-amd64.tar.gz"
+    # URL для скачивания из правильного репозитория remittor/zapret
+    local download_url="https://github.com/remittor/zapret/releases/download/v${version}/zapret-linux-amd64.tar.gz"
 
-    if ! curl -sL -I "$download_url" 2>/dev/null | grep -q "200 OK"; then
-        log_error "Версия $version не найдена"
-        return 1
+    # Проверяем, что /opt существует
+    if [ ! -d /opt ]; then
+        mkdir -p /opt || return 1
     fi
 
     print_info "Скачиваем zapret v$version..."
     local tmp_file="/tmp/zapret_$version.tar.gz"
 
-    if ! curl -sL -o "$tmp_file" "$download_url"; then
-        log_error "Не удалось скачать zapret"
+    if ! curl -fsSL -o "$tmp_file" "$download_url" 2>/dev/null; then
+        log_error "Не удалось скачать zapret v$version"
+        log_error "Проверьте интернет-соединение или номер версии"
+        rm -f "$tmp_file"
+        return 1
+    fi
+
+    # Проверяем размер файла
+    if [ ! -f "$tmp_file" ] || [ ! -s "$tmp_file" ]; then
+        log_error "Скачанный файл пуст или повреждён"
         rm -f "$tmp_file"
         return 1
     fi
@@ -66,22 +91,17 @@ install_or_update_zapret() {
 
     rm -f "$tmp_file"
 
+    # Проверяем успешность установки
+    if [ ! -d /opt/zapret ]; then
+        log_error "Директория /opt/zapret не создана после распаковки"
+        return 1
+    fi
+
     if [ -f /opt/zapret/init.d/zapret ]; then
         chmod +x /opt/zapret/init.d/zapret
     fi
 
-    print_success "zapret v$version установлен"
+    print_success "zapret v$version успешно установлен в /opt/zapret/"
     log_info "Установлен zapret v$version"
     return 0
-}
-
-get_latest_zapret_version() {
-    local version
-    version=$(curl -s "https://api.github.com/repos/remittor/zapret-openwrt/releases/latest" 2>/dev/null | grep '"tag_name"' | head -1 | cut -d'"' -f4 | sed 's/v//')
-
-    if [ -z "$version" ]; then
-        version="0.20.12"
-    fi
-
-    echo "$version"
 }
