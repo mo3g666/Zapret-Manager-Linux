@@ -44,16 +44,12 @@ check_zapret_installed() {
 get_latest_zapret_version() {
     local version
 
-    log_info "Получаю последнюю версию zapret2 из GitHub API..."
-
     version=$(curl -s "https://api.github.com/repos/bol-van/zapret2/releases/latest" 2>/dev/null | jq -r '.tag_name' 2>/dev/null | sed 's/^v//')
 
     if [ -z "$version" ] || [ "$version" = "null" ]; then
-        log_warn "Не удалось получить версию из GitHub, используется по умолчанию: 0.9.5.2"
         version="0.9.5.2"
     fi
 
-    log_info "Определена версия zapret: $version"
     echo "$version"
 }
 
@@ -71,6 +67,8 @@ install_or_update_zapret() {
         return 1
     fi
 
+    log_info "Получаю последнюю версию zapret2 из GitHub API..."
+    log_info "Определена версия zapret: $version"
     log_info "=== Начало установки zapret v$version ==="
     print_info "Проверяем zapret v$version на GitHub..."
 
