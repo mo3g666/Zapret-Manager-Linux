@@ -177,20 +177,23 @@ install_or_update_zapret() {
             return 1
         fi
 
-        # Исправляем пути в systemd файле
-        sed -i 's|/opt/zapret2|/opt/zapret|g' /etc/systemd/system/zapret.service
+        # Исправляем пути в systemd файле (zapret2 → zapret)
+        sed -i 's|/opt/zapret2|/opt/zapret|g; s|zapret2|zapret|g' /etc/systemd/system/zapret.service
+
+        log_info "Содержимое systemd файла после замены:"
+        cat /etc/systemd/system/zapret.service | while read -r line; do log_info "systemd: $line"; done
 
         chmod 644 /etc/systemd/system/zapret.service
 
         # Перезагружаем systemd
-        systemctl daemon-reload 2>/dev/null || {
+        if ! systemctl daemon-reload 2>/dev/null; then
             log_error "Ошибка: не удалось перезагрузить systemd"
-        }
+        fi
 
         # Включаем сервис
-        systemctl enable zapret 2>/dev/null || {
+        if ! systemctl enable zapret 2>/dev/null; then
             log_warn "Не удалось включить сервис zapret в автозагрузку"
-        }
+        fi
 
         log_info "Systemd сервис установлен"
     else
