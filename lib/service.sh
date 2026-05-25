@@ -52,7 +52,7 @@ zml_status_zapret() {
 }
 
 zml_is_zapret_installed() {
-    systemctl list-unit-files | grep -q "^zapret2" 2>/dev/null
+    systemctl list-unit-files 2>/dev/null | grep -q "^zapret2\.service" 2>/dev/null
     return $?
 }
 
