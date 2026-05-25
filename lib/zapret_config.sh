@@ -8,7 +8,9 @@ source "$(dirname "$0")/service.sh"
 source "$(dirname "$0")/meta.sh"
 
 ensure_zapret_dirs() {
-    mkdir -p "$ZML_DIR" "$ZML_STATE_DIR" "$ZML_BACKUP_DIR" "$ZAPRET_CONFIG_DIR" || return 1
+    # Создаём директории для ZML, но НЕ для ZAPRET_CONFIG_DIR
+    # т.к. /opt/zapret2/config это файл, а не директория!
+    mkdir -p "$ZML_DIR" "$ZML_STATE_DIR" "$ZML_BACKUP_DIR" || return 1
     return 0
 }
 
@@ -22,17 +24,19 @@ zml_apply_strategy() {
 
     ensure_zapret_dirs || return 1
 
-    # Копируем стратегию в оба места для совместимости
-    # 1. В config (где ищет zapret2 по умолчанию)
-    if ! cp "$STRATEGY_FILE" "$ZAPRET_CONFIG_DIR/config"; then
-        log_error "Не удалось скопировать стратегию в $ZAPRET_CONFIG_DIR/config"
+    # ВАЖНО: /opt/zapret2/config это ФАЙЛ (конфиг zapret2), а не директория!
+    # Копируем стратегию напрямую в файл /opt/zapret2/config
+    local zapret_config_file="/opt/zapret2/config"
+
+    if ! cp "$STRATEGY_FILE" "$zapret_config_file"; then
+        log_error "Не удалось скопировать стратегию в $zapret_config_file"
         return 1
     fi
-    log_info "Стратегия скопирована в $ZAPRET_CONFIG_DIR/config"
+    log_info "Стратегия скопирована в $zapret_config_file"
 
-    # 2. В current.strategy (для совместимости с нашей системой)
-    if ! cp "$STRATEGY_FILE" "$ZAPRET_CONFIG_DIR/current.strategy"; then
-        log_error "Не удалось скопировать стратегию в $ZAPRET_CONFIG_DIR/current.strategy"
+    # Проверяем что файл не пустой
+    if [ ! -s "$zapret_config_file" ]; then
+        log_error "Ошибка: конфиг файл пустой"
         return 1
     fi
 

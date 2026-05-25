@@ -37,25 +37,14 @@ debug_show_strategy_files() {
 
     # Показываем конфиг в zapret2
     echo ""
-    echo "📄 ZAPRET_CONFIG_DIR: $ZAPRET_CONFIG_DIR"
-    if [ -d "$ZAPRET_CONFIG_DIR" ]; then
-        echo "   Файлы в директории:"
-        ls -lah "$ZAPRET_CONFIG_DIR" 2>/dev/null | sed 's/^/   /'
-
-        # Показываем содержимое config
-        if [ -f "$ZAPRET_CONFIG_DIR/config" ]; then
-            echo ""
-            echo "   📄 config (первые 10 строк):"
-            head -10 "$ZAPRET_CONFIG_DIR/config" | sed 's/^/      /'
-        fi
-
-        if [ -f "$ZAPRET_CONFIG_DIR/current.strategy" ]; then
-            echo ""
-            echo "   📄 current.strategy (первые 10 строк):"
-            head -10 "$ZAPRET_CONFIG_DIR/current.strategy" | sed 's/^/      /'
-        fi
+    echo "📄 Конфиг zapret2: /opt/zapret2/config"
+    if [ -f /opt/zapret2/config ]; then
+        local config_size=$(stat -f%z /opt/zapret2/config 2>/dev/null || stat -c%s /opt/zapret2/config 2>/dev/null)
+        echo "   Размер: $config_size байт"
+        echo "   Первые 10 строк:"
+        head -10 /opt/zapret2/config 2>/dev/null | sed 's/^/      /'
     else
-        echo "   ❌ ДИРЕКТОРИЯ НЕ СУЩЕСТВУЕТ"
+        echo "   ❌ ФАЙЛ НЕ СУЩЕСТВУЕТ"
     fi
 
     echo ""
