@@ -52,8 +52,24 @@ zml_status_zapret() {
 }
 
 zml_is_zapret_installed() {
-    systemctl list-unit-files 2>/dev/null | grep -q "^zapret2\.service" 2>/dev/null
-    return $?
+    # Проверяем несколькими способами
+
+    # Способ 1: Файл сервиса существует
+    if [ -f /etc/systemd/system/zapret2.service ]; then
+        return 0
+    fi
+
+    # Способ 2: systemctl может найти сервис
+    if systemctl show zapret2.service &>/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Способ 3: list-unit-files содержит zapret2
+    if systemctl list-unit-files 2>/dev/null | grep -q "zapret2"; then
+        return 0
+    fi
+
+    return 1
 }
 
 zml_zapret_status_display() {
