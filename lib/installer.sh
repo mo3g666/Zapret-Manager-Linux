@@ -128,16 +128,26 @@ install_or_update_zapret() {
     log_info "Временный файл удалён"
 
     # Переименовываем директорию zapret2-v* в zapret
-    local extracted_dir="/opt/zapret2-v${version}"
-    if [ -d "$extracted_dir" ]; then
-        log_info "Переименование директории $extracted_dir -> /opt/zapret"
+    log_info "Ищу распакованную директорию zapret2-v*"
+    local extracted_dir
+    extracted_dir=$(find /opt -maxdepth 1 -name "zapret2-v*" -type d 2>/dev/null | head -1)
+
+    if [ -n "$extracted_dir" ] && [ -d "$extracted_dir" ]; then
+        log_info "Найдена директория: $extracted_dir"
+        log_info "Переименование в /opt/zapret"
         rm -rf /opt/zapret 2>/dev/null
-        mv "$extracted_dir" /opt/zapret || {
+        if ! mv "$extracted_dir" /opt/zapret; then
             log_error "Ошибка: не удалось переименовать директорию"
             print_error "Не удалось переименовать директорию"
             log_info "=== Конец установки zapret (ОШИБКА) ==="
             return 1
-        }
+        fi
+        log_info "Директория успешно переименована"
+    else
+        log_error "Ошибка: распакованная директория zapret2-v* не найдена в /opt"
+        print_error "Распакованная директория не найдена"
+        log_info "=== Конец установки zapret (ОШИБКА) ==="
+        return 1
     fi
 
     # Проверяем успешность установки
