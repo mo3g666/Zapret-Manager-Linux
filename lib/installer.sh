@@ -127,22 +127,22 @@ install_or_update_zapret() {
     rm -f "$tmp_file"
     log_info "Временный файл удалён"
 
-    # Переименовываем директорию zapret2-v* в zapret
+    # Переименовываем директорию zapret2-v* в zapret2
     log_info "Ищу распакованную директорию zapret2-v*"
     local extracted_dir
     extracted_dir=$(find /opt -maxdepth 1 -name "zapret2-v*" -type d 2>/dev/null | head -1)
 
     if [ -n "$extracted_dir" ] && [ -d "$extracted_dir" ]; then
         log_info "Найдена директория: $extracted_dir"
-        log_info "Переименование в /opt/zapret"
-        rm -rf /opt/zapret 2>/dev/null
-        if ! mv "$extracted_dir" /opt/zapret; then
+        log_info "Переименование в /opt/zapret2"
+        rm -rf /opt/zapret2 2>/dev/null
+        if ! mv "$extracted_dir" /opt/zapret2; then
             log_error "Ошибка: не удалось переименовать директорию"
             print_error "Не удалось переименовать директорию"
             log_info "=== Конец установки zapret (ОШИБКА) ==="
             return 1
         fi
-        log_info "Директория успешно переименована"
+        log_info "Директория успешно переименована в /opt/zapret2"
     else
         log_error "Ошибка: распакованная директория zapret2-v* не найдена в /opt"
         print_error "Распакованная директория не найдена"
@@ -151,25 +151,25 @@ install_or_update_zapret() {
     fi
 
     # Проверяем успешность установки
-    if [ ! -d /opt/zapret ]; then
-        log_error "Ошибка: директория /opt/zapret не создана после распаковки"
-        print_error "Директория /opt/zapret не создана"
+    if [ ! -d /opt/zapret2 ]; then
+        log_error "Ошибка: директория /opt/zapret2 не создана после распаковки"
+        print_error "Директория /opt/zapret2 не создана"
         log_info "=== Конец установки zapret (ОШИБКА) ==="
         return 1
     fi
 
-    log_info "Директория /opt/zapret найдена"
+    log_info "Директория /opt/zapret2 найдена"
 
     # Выставляем права на исполнение
-    if [ -f /opt/zapret/init.d/sysv/zapret ]; then
-        chmod +x /opt/zapret/init.d/sysv/zapret
-        log_info "Прав доступа выставлены на /opt/zapret/init.d/sysv/zapret"
+    if [ -f /opt/zapret2/init.d/sysv/zapret2 ]; then
+        chmod +x /opt/zapret2/init.d/sysv/zapret2
+        log_info "Прав доступа выставлены на /opt/zapret2/init.d/sysv/zapret2"
     fi
 
     # Устанавливаем systemd сервис
     log_info "Установка systemd сервиса"
 
-    # Создаём правильный systemd файл с правильными путями
+    # Создаём systemd файл с путями к zapret2
     cat > /etc/systemd/system/zapret.service << 'SYSTEMD_EOF'
 [Unit]
 Description=Zapret DPI Bypass Service
@@ -183,8 +183,8 @@ TimeoutSec=30sec
 IgnoreSIGPIPE=no
 GuessMainPID=no
 RemainAfterExit=no
-ExecStart=/opt/zapret/init.d/sysv/zapret start
-ExecStop=/opt/zapret/init.d/sysv/zapret stop
+ExecStart=/opt/zapret2/init.d/sysv/zapret2 start
+ExecStop=/opt/zapret2/init.d/sysv/zapret2 stop
 ExecReload=/bin/kill -HUP $MAINPID
 
 [Install]
@@ -199,7 +199,7 @@ SYSTEMD_EOF
     fi
 
     chmod 644 /etc/systemd/system/zapret.service
-    log_info "Systemd файл создан с правильными путями"
+    log_info "Systemd файл создан с путями к /opt/zapret2"
 
     # Перезагружаем systemd
     if ! systemctl daemon-reload 2>/dev/null; then
