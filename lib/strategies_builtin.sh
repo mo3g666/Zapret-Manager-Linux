@@ -119,7 +119,11 @@ install_builtin_strategy() {
         return 1
     fi
 
-    zml_remove_strategy_block "$version"
+    ensure_zapret_dirs || return 1
+
+    # Пересоздаём STRATEGY_FILE — убираем старые данные (устаревший формат, остатки предыдущих версий)
+    # YouTube/Discord/Game блоки сбрасываются тоже, пользователь настроит заново если нужно
+    : > "$STRATEGY_FILE"
 
     if ! zml_write_strategy_block "$version" "$params"; then
         print_error "Не удалось записать стратегию"
