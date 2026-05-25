@@ -169,37 +169,14 @@ install_or_update_zapret() {
     # Устанавливаем systemd сервис
     log_info "Установка systemd сервиса"
 
-    # Создаём systemd файл с путями к zapret2
-    cat > /etc/systemd/system/zapret.service << 'SYSTEMD_EOF'
-[Unit]
-Description=Zapret DPI Bypass Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=forking
-Restart=no
-TimeoutSec=30sec
-IgnoreSIGPIPE=no
-GuessMainPID=no
-RemainAfterExit=no
-ExecStart=/opt/zapret2/init.d/sysv/zapret2 start
-ExecStop=/opt/zapret2/init.d/sysv/zapret2 stop
-ExecReload=/bin/kill -HUP $MAINPID
-
-[Install]
-WantedBy=multi-user.target
-SYSTEMD_EOF
-
-    if [ ! -f /etc/systemd/system/zapret.service ]; then
-        log_error "Ошибка: не удалось создать systemd файл"
-        print_error "Не удалось установить systemd сервис"
-        log_info "=== Конец установки zapret (ОШИБКА) ==="
-        return 1
+    # Копируем оригинальный systemd файл из архива
+    if [ -f /opt/zapret2/init.d/systemd/zapret2.service ]; then
+        cp /opt/zapret2/init.d/systemd/zapret2.service /etc/systemd/system/zapret2.service
+        chmod 644 /etc/systemd/system/zapret2.service
+        log_info "Systemd файл zapret2.service установлен из архива"
+    else
+        log_warn "Внимание: systemd файл zapret2.service не найден в архиве"
     fi
-
-    chmod 644 /etc/systemd/system/zapret.service
-    log_info "Systemd файл создан с путями к /opt/zapret2"
 
     # Перезагружаем systemd
     if ! systemctl daemon-reload 2>/dev/null; then
@@ -207,11 +184,11 @@ SYSTEMD_EOF
     fi
 
     # Включаем сервис
-    if ! systemctl enable zapret 2>/dev/null; then
-        log_warn "Не удалось включить сервис zapret в автозагрузку"
+    if ! systemctl enable zapret2 2>/dev/null; then
+        log_warn "Не удалось включить сервис zapret2 в автозагрузку"
     fi
 
-    log_info "Systemd сервис установлен"
+    log_info "Systemd сервис zapret2 установлен"
 
     print_success "zapret v$version успешно установлен в /opt/zapret2/"
     log_info "zapret v$version успешно установлен в /opt/zapret2/"

@@ -5,44 +5,44 @@ source "$(dirname "$0")/logger.sh"
 source "$(dirname "$0")/ui.sh"
 
 zml_start_zapret() {
-    print_info "Запускаем zapret..."
-    if systemctl start zapret; then
-        log_info "zapret запущен"
-        print_success "zapret запущен"
+    print_info "Запускаем zapret2..."
+    if systemctl start zapret2; then
+        log_info "zapret2 запущен"
+        print_success "zapret2 запущен"
         return 0
     else
-        log_error "Не удалось запустить zapret"
+        log_error "Не удалось запустить zapret2"
         return 1
     fi
 }
 
 zml_stop_zapret() {
-    print_info "Останавливаем zapret..."
-    if systemctl stop zapret; then
-        log_info "zapret остановлен"
-        print_success "zapret остановлен"
+    print_info "Останавливаем zapret2..."
+    if systemctl stop zapret2; then
+        log_info "zapret2 остановлен"
+        print_success "zapret2 остановлен"
         return 0
     else
-        log_error "Не удалось остановить zapret"
+        log_error "Не удалось остановить zapret2"
         return 1
     fi
 }
 
 zml_restart_zapret() {
-    print_info "Перезапускаем zapret..."
-    if systemctl restart zapret; then
-        log_info "zapret перезапущен"
-        print_success "zapret перезапущен"
+    print_info "Перезапускаем zapret2..."
+    if systemctl restart zapret2; then
+        log_info "zapret2 перезапущен"
+        print_success "zapret2 перезапущен"
         sleep 1
         return 0
     else
-        log_error "Не удалось перезапустить zapret"
+        log_error "Не удалось перезапустить zapret2"
         return 1
     fi
 }
 
 zml_status_zapret() {
-    if systemctl is-active --quiet zapret; then
+    if systemctl is-active --quiet zapret2; then
         echo "active"
         return 0
     else
@@ -52,7 +52,7 @@ zml_status_zapret() {
 }
 
 zml_is_zapret_installed() {
-    systemctl list-unit-files | grep -q "^zapret" 2>/dev/null
+    systemctl list-unit-files | grep -q "^zapret2" 2>/dev/null
     return $?
 }
 
