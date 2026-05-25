@@ -160,6 +160,22 @@ install_or_update_zapret() {
 
     log_info "Директория /opt/zapret2 найдена"
 
+    # Запускаем установку zapret2 через его собственный скрипт
+    log_info "Запуск install_easy.sh для установки zapret2"
+    print_info "Установка zapret2 (может занять время)..."
+
+    if [ -f /opt/zapret2/install_easy.sh ]; then
+        if ! bash /opt/zapret2/install_easy.sh 2>&1 | while read -r line; do log_info "install_easy: $line"; done; then
+            log_error "Ошибка: install_easy.sh не выполнился успешно"
+            print_error "Ошибка установки zapret2"
+            log_info "=== Конец установки zapret (ОШИБКА) ==="
+            return 1
+        fi
+        log_info "install_easy.sh выполнен успешно"
+    else
+        log_warn "Внимание: install_easy.sh не найден"
+    fi
+
     # Выставляем права на исполнение
     if [ -f /opt/zapret2/init.d/sysv/zapret2 ]; then
         chmod +x /opt/zapret2/init.d/sysv/zapret2
