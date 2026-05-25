@@ -69,6 +69,18 @@ remove_hosts_group() {
     return 0
 }
 
+hosts_group_label() {
+    local group_id="$1"
+    local group_ref="DOMAINS_${group_id^^}"
+    local -n group="$group_ref"
+    local marker_begin="${group[MARKER_BEGIN]}"
+    if grep -q "$marker_begin" "$HOSTS_FILE" 2>/dev/null; then
+        echo "Удалить "
+    else
+        echo "Добавить"
+    fi
+}
+
 toggle_hosts_group() {
     local group_id="$1"
     local group_ref="DOMAINS_${group_id^^}"
