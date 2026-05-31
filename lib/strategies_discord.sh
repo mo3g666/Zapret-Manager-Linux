@@ -28,3 +28,15 @@ install_discord_strategy() {
     pause_menu
     return 0
 }
+
+remove_discord_strategy() {
+    print_info "Удаляем Discord стратегию..."
+
+    zml_remove_strategy_block "Dv1"
+    set_meta "DISCORD_STRATEGY" "" || return 1
+    zml_apply_strategy || return 1
+
+    print_success "Discord стратегия удалена"
+    pause_menu
+    return 0
+}

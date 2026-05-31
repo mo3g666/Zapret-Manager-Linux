@@ -125,17 +125,31 @@ menu_strategies() {
                 echo "1) YV01 - Fake TLS"
                 echo "2) YV02 - Fake + multisplit (pos 1)"
                 echo "3) YV03 - Fake + multisplit (pos 2, sld)"
+                echo "4) Удалить YouTube стратегию"
                 echo "0) Назад"
                 read -p "Выбор: " yt_choice
                 case "$yt_choice" in
                     1) install_youtube_strategy "yv01" ;;
                     2) install_youtube_strategy "yv02" ;;
                     3) install_youtube_strategy "yv03" ;;
+                    4) remove_youtube_strategy ;;
                     0|"") ;;
                     *) print_error "Неверный выбор" && pause_menu ;;
                 esac
                 ;;
-            4) install_game_strategy ;;
+            4)
+                print_header "Game стратегии"
+                echo "1) Gv1 - UDP STUN/WireGuard"
+                echo "2) Удалить Game стратегию"
+                echo "0) Назад"
+                read -p "Выбор: " game_choice
+                case "$game_choice" in
+                    1) install_game_strategy ;;
+                    2) remove_game_strategy ;;
+                    0|"") ;;
+                    *) print_error "Неверный выбор" && pause_menu ;;
+                esac
+                ;;
             5) print_info "РКН будет на Этап 2" && pause_menu ;;
             6) print_info "Обновление списков будет на Этап 2" && pause_menu ;;
             7) print_info "WSSIZE будет на Этап 2" && pause_menu ;;
@@ -186,6 +200,7 @@ menu_discord() {
         echo "6) Добавить Finland IPs в hosts"
         echo "7) Удалить Finland IPs"
         echo "8) Установить Discord стратегию Dv1"
+        echo "9) Удалить Discord стратегию"
         echo "0) Назад"
         echo ""
 
@@ -200,6 +215,7 @@ menu_discord() {
             6) add_discord_finland_hosts && set_meta "DISCORD_FINLAND_IPS" "1" && pause_menu ;;
             7) remove_discord_finland_hosts && set_meta "DISCORD_FINLAND_IPS" "0" && pause_menu ;;
             8) install_discord_strategy ;;
+            9) remove_discord_strategy ;;
             0|"") break ;;
             *) print_error "Неверный выбор" && pause_menu ;;
         esac

@@ -47,3 +47,18 @@ install_youtube_strategy() {
     pause_menu
     return 0
 }
+
+remove_youtube_strategy() {
+    print_info "Удаляем YouTube стратегию..."
+
+    zml_remove_strategy_block "YV01"
+    zml_remove_strategy_block "YV02"
+    zml_remove_strategy_block "YV03"
+
+    set_meta "YOUTUBE_STRATEGY" "" || return 1
+    zml_apply_strategy || return 1
+
+    print_success "YouTube стратегия удалена"
+    pause_menu
+    return 0
+}

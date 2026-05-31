@@ -24,3 +24,15 @@ install_game_strategy() {
     pause_menu
     return 0
 }
+
+remove_game_strategy() {
+    print_info "Удаляем Game стратегию..."
+
+    zml_remove_strategy_block "Gv1"
+    set_meta "GAME_STRATEGY" "" || return 1
+    zml_apply_strategy || return 1
+
+    print_success "Game стратегия удалена"
+    pause_menu
+    return 0
+}
