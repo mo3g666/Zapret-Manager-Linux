@@ -8,20 +8,8 @@ source "$(dirname "$0")/zapret_config.sh"
 source "$(dirname "$0")/ui.sh"
 
 strategy_dv1() {
-    echo "--new
---filter-udp=19294-19344,50000-50100
---filter-l7=discord,stun
---dpi-desync=fake
---dpi-desync-fake-discord=$ZAPRET_FAKE_DIR/stun.bin
---dpi-desync-fake-stun=$ZAPRET_FAKE_DIR/stun.bin
---dpi-desync-repeats=6
---new
---filter-tcp=2053,2083,2087,2096,8443
---hostlist-domains=discord.media
---dpi-desync=multisplit
---dpi-desync-split-seqovl=652
---dpi-desync-split-pos=2
---dpi-desync-split-seqovl-pattern=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin"
+    echo "--filter-udp=19294-19344,50000-50100 --filter-l7=discord,stun --payload=discord_ip_discovery,stun --lua-desync=fake:blob=0x00000000000000000000000000000000:repeats=6 --new
+--filter-tcp=2053,2083,2087,2096,8443 --filter-l7=tls --payload=tls_client_hello --lua-desync=multisplit:pos=2,seqovl=652"
 }
 
 install_discord_strategy() {

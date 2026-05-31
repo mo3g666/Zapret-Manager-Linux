@@ -8,27 +8,15 @@ source "$(dirname "$0")/zapret_config.sh"
 source "$(dirname "$0")/ui.sh"
 
 strategy_yv01() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=fake
---dpi-desync-fake-tls=$ZAPRET_FAKE_DIR/tls_clienthello_www_google_com.bin
---dpi-desync-repeats=5"
+    echo "--filter-tcp=443 --filter-l7=tls --hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5:repeats=5"
 }
 
 strategy_yv02() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=fake,multisplit
---dpi-desync-split-pos=1
---dpi-desync-repeats=4"
+    echo "--filter-tcp=443 --filter-l7=tls --hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5 --lua-desync=multisplit:pos=1:repeats=4"
 }
 
 strategy_yv03() {
-    echo "--filter-tcp=443
---hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt
---dpi-desync=fake,multisplit
---dpi-desync-split-pos=2,sld
---dpi-desync-repeats=6"
+    echo "--filter-tcp=443 --filter-l7=tls --hostlist=$ZAPRET_IPSET_DIR/zapret-hosts-google.txt --payload=tls_client_hello --lua-desync=fake:blob=fake_default_tls:tcp_md5 --lua-desync=multisplit:pos=2,sld:repeats=6"
 }
 
 install_youtube_strategy() {

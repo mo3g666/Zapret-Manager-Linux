@@ -8,12 +8,7 @@ source "$(dirname "$0")/zapret_config.sh"
 source "$(dirname "$0")/ui.sh"
 
 strategy_gv1() {
-    echo "--new
---filter-udp=1024-65535
---dpi-desync=fake
---dpi-desync-cutoff=d2
---dpi-desync-any-protocol=1
---dpi-desync-fake-unknown-udp=$ZAPRET_FAKE_DIR/stun.bin"
+    echo "--filter-udp=1024-65535 --payload=stun,wireguard_initiation,wireguard_response,wireguard_cookie --lua-desync=fake:blob=0x00000000000000000000000000000000:repeats=2"
 }
 
 install_game_strategy() {
